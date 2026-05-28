@@ -49,6 +49,8 @@ const BRAND = {
 };
 
 const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbx_EegCdS2i5C7u_ruefFCjbvSjqFB8bMg8VnL3Nm_DiSE3XF12-zY6MCwnycfsvQhbQw/exec";
+const LOGIN_USERNAME = "admin";
+const LOGIN_PASSWORD = "OOL2026!";
 
 const sourceSheet = {
   name: "OOL CS Metrics Tracker",
@@ -247,6 +249,37 @@ function ReportTable({ search, status }) {
 }
 
 export default function OodlesReportHub() {
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+  return localStorage.getItem("oolReportHubLoggedIn") === "true";
+});
+
+const [loginUsername, setLoginUsername] = useState("");
+const [loginPassword, setLoginPassword] = useState("");
+const [loginError, setLoginError] = useState("");
+
+function handleLogin(event) {
+  event.preventDefault();
+
+  const usernameIsCorrect = loginUsername.trim() === LOGIN_USERNAME;
+  const passwordIsCorrect = loginPassword === LOGIN_PASSWORD;
+
+  if (usernameIsCorrect && passwordIsCorrect) {
+    localStorage.setItem("oolReportHubLoggedIn", "true");
+    setIsLoggedIn(true);
+    setLoginError("");
+    setLoginUsername("");
+    setLoginPassword("");
+    return;
+  }
+
+  setLoginError("Incorrect username or password.");
+}
+
+function handleLogout() {
+  localStorage.removeItem("oolReportHubLoggedIn");
+  setIsLoggedIn(false);
+}
+  
   const [activeTab, setActiveTab] = useState("Main");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("All");
@@ -279,6 +312,74 @@ useEffect(() => {
   const activeReport = useMemo(() => reportTabs.find((tab) => tab.name === activeTab), [activeTab]);
   const ActiveIcon = activeReport.icon;
 
+  if (!isLoggedIn) {
+  return (
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(158,107,229,0.20),_transparent_34%),linear-gradient(180deg,#fff_0%,#f8fafc_45%,#fff_100%)] flex items-center justify-center px-4">
+      <div className="w-full max-w-md rounded-[2rem] border border-slate-200 bg-white p-8 shadow-xl shadow-purple-100/60">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#9e6be5] text-white shadow-sm">
+          <BarChart3 className="h-7 w-7" />
+        </div>
+
+        <div className="mt-6 text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#ff7500]">
+            Oodles of Leads
+          </p>
+          <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-950">
+            Data Analyst Report Hub
+          </h1>
+          <p className="mt-3 text-sm leading-6 text-slate-500">
+            Please log in to view campaign reports and performance dashboards.
+          </p>
+        </div>
+
+        <form onSubmit={handleLogin} className="mt-7 space-y-4">
+          <div>
+            <label className="text-sm font-semibold text-slate-700">
+              Username
+            </label>
+            <input
+              value={loginUsername}
+              onChange={(event) => setLoginUsername(event.target.value)}
+              className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-[#9e6be5] focus:bg-white focus:ring-4 focus:ring-purple-100"
+              placeholder="Enter username"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-semibold text-slate-700">
+              Password
+            </label>
+            <input
+              value={loginPassword}
+              onChange={(event) => setLoginPassword(event.target.value)}
+              type="password"
+              className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-[#9e6be5] focus:bg-white focus:ring-4 focus:ring-purple-100"
+              placeholder="Enter password"
+            />
+          </div>
+
+          {loginError && (
+            <div className="rounded-2xl bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 ring-1 ring-rose-100">
+              {loginError}
+            </div>
+          )}
+
+          <Button
+  type="submit"
+  className="h-12 w-full rounded-2xl bg-[#ff7500] font-bold text-white hover:bg-[#e86a00]"
+>
+  Log In
+</Button>
+        </form>
+
+        <p className="mt-5 text-center text-xs leading-5 text-slate-400">
+          Access is limited to authorized Oodles of Leads team members.
+        </p>
+      </div>
+    </div>
+  );
+}
+
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(158,107,229,0.18),_transparent_34%),linear-gradient(180deg,#fff_0%,#f8fafc_45%,#fff_100%)] text-slate-950">
       <header className="sticky top-0 z-30 border-b border-white/60 bg-white/80 backdrop-blur-xl">
@@ -301,6 +402,14 @@ useEffect(() => {
               Open Reports
               <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
+
+            <Button
+  onClick={handleLogout}
+  variant="outline"
+  className="rounded-full border-slate-200 bg-white"
+>
+  Log Out
+</Button>
           </div>
         </div>
       </header>
