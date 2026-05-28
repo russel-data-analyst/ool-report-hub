@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Activity,
@@ -47,6 +47,8 @@ const BRAND = {
   purple: "#9e6be5",
   orange: "#ff7500",
 };
+
+const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbx_EegCdS2i5C7u_ruefFCjbvSjqFB8bMg8VnL3Nm_DiSE3XF12-zY6MCwnycfsvQhbQw/exec";
 
 const sourceSheet = {
   name: "OOL CS Metrics Tracker",
@@ -249,6 +251,31 @@ export default function OodlesReportHub() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("All");
 
+  const [sheetData, setSheetData] = useState(null);
+  const [isLoadingSheet, setIsLoadingSheet] = useState(true);
+  const [sheetError, setSheetError] = useState("");
+
+useEffect(() => {
+  async function loadSheetData() {
+    try {
+      setIsLoadingSheet(true);
+      setSheetError("");
+
+      const response = await fetch(GOOGLE_SHEET_API_URL);
+      const data = await response.json();
+
+      setSheetData(data);
+    } catch (error) {
+      setSheetError("Unable to load Google Sheet data.");
+      console.error(error);
+    } finally {
+      setIsLoadingSheet(false);
+    }
+  }
+
+  loadSheetData();
+}, []);
+
   const activeReport = useMemo(() => reportTabs.find((tab) => tab.name === activeTab), [activeTab]);
   const ActiveIcon = activeReport.icon;
 
@@ -328,6 +355,11 @@ export default function OodlesReportHub() {
             </div>
             <div className="mt-6 rounded-2xl bg-white/5 p-4 text-sm leading-6 text-slate-300">
               Website logic should ignore helper, archive, connection, testing, and old tabs. Only the approved tabs above should power navigation, filters, and reporting modules.
+            </div>
+            <div className="mt-4 rounded-2xl bg-white/5 p-4 text-sm leading-6 text-slate-300">
+            {isLoadingSheet && "Loading Google Sheet data..."}
+            {!isLoadingSheet && !sheetError && sheetData && "Google Sheet connected successfully."}
+            {!isLoadingSheet && sheetError && sheetError}
             </div>
           </motion.div>
         </section>
